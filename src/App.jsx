@@ -7,19 +7,15 @@ function Square({ value, onSquareClick }) {
         </button>
     );
 }
-function App() {
-    //lifting state up
-    const [squares, setSquares] = useState(Array(9).fill(null));
-    const [xIsNext, setXIsNext] = useState(true);
-
+function Board({ xIsNext, squares, onPlay }) {
     function handleClick(i) {
         if (squares[i] || calculateWinner(squares)) return;
         //ini.adalah konsep immutabality
         const nextSquares = squares.slice(); //menduplikat array squares
 
         nextSquares[i] = xIsNext ? "x" : "o";
-        setSquares(nextSquares);
-        setXIsNext(!xIsNext);
+
+        onPlay(nextSquares);
     }
     const winner = calculateWinner(squares);
 
@@ -70,8 +66,51 @@ function App() {
         </>
     );
 }
-export default App;
 
+function Game() {
+    const [history, setHistory] = useState([Array(9).fill(null)]);
+    const [currentMove, setCurrentMove] = useState(0);
+    const xIsNext = currentMove % 2 === 0;
+    const currentSquares = history[currentMove];
+
+    function jumpTo(nextMove) {
+        setCurrentMove(nextMove);
+    }
+
+    function handlePlay(nextSquares) {
+        const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
+        setHistory(nextHistory);
+        setCurrentMove(nextHistory.length - 1);
+    }
+
+    const moves = history.map((squares, move) => {
+        let text = move > 0 ? `GO TO MOVE ${move}` : `GO TO GAME START`;
+
+        return (
+            <li key={move}>
+                <button onClick={() => jumpTo(move)}>{text}</button>
+            </li>
+        );
+    });
+
+    return (
+        <>
+            <div className="game">
+                <div className="game-board">
+                    <Board
+                        xIsNext={xIsNext}
+                        squares={currentSquares}
+                        onPlay={handlePlay}
+                    />
+                </div>
+                <div className="game-info">
+                    <ol>{moves}</ol>
+                </div>
+            </div>
+        </>
+    );
+}
+export default Game;
 
 //untuk cek pemenang
 function calculateWinner(squares) {
@@ -89,9 +128,9 @@ function calculateWinner(squares) {
     for (let i = 1; i < lines.length; i++) {
         const [a, b, c] = lines[i];
 
-        if (squares[a] && squares[a] === squares[b] && squares[c]) {
-            return squares[a];
-        }
+        if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
     }
 
     return false;
